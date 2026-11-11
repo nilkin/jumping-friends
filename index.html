@@ -3302,6 +3302,7 @@ function stageFail() {
   lives = 3;
   hitHalf = false;
   var target = Math.max(0, season - 1);
+  gifts = gifts.slice(0, target);
   [392, 349, 311, 262].forEach(function (n, i) {
     return setTimeout(function () {
       return beep(n, 0.3, 'triangle', 0.07);

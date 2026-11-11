@@ -1466,6 +1466,8 @@ function goToStage(idx, a, b2) {
 function stageFail() {
   lives = 3; hitHalf = false;
   const target = Math.max(0, season - 1);
+  // gifts[i] = i-ci mərhələnin hədiyyəsi; geri qayıdılan mərhələnin hədiyyəsi silinir, boss yenidən udulanda təkrar verilir
+  gifts = gifts.slice(0, target);
   [392, 349, 311, 262].forEach((n, i) => setTimeout(() => beep(n, 0.3, 'triangle', 0.07), i * 220));
   goToStage(target, T('livesOut'), T('back') + T('stages')[target][0]);
 }
