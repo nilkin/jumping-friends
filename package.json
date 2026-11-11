@@ -1,0 +1,13 @@
+{
+  "name": "jumping-friends",
+  "private": true,
+  "description": "Atlayan Dostlar — build: src/index.html → index.html (ES5, köhnə TV brauzerləri üçün)",
+  "scripts": {
+    "build": "node build.js"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.26.0",
+    "@babel/preset-env": "^7.26.0",
+    "acorn": "^8.14.0"
+  }
+}
