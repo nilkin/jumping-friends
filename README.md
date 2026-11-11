@@ -13,13 +13,16 @@
 - Maneənin üstünə yuxarıdan düşmək təhlükəsizdir
 - **Dillər:** Azərbaycan, Русский, English
 - **Sürət:** Yavaş / Orta / Sürətli
+- **Öz şəklin:** menyuda 📷 düyməsi ilə şəkil seçmək olar. Günəş mərhələsində qəhrəmanın başı bu şəkil olur. Şəkil seçilməyibsə, adi Günəşcik qalır. Şəkli ✕ düyməsi ilə silmək olar. Şəkil yalnız bu brauzerdə saxlanılır və heç yerə göndərilmir.
 
 ## İdarəetmə
-| Cihaz | Atlamaq |
-|---|---|
-| Telefon / planşet | Ekrana toxun |
-| Kompüter | Boşluq, ↑ və ya W |
-| TV pultu | OK (Enter) |
+| Cihaz | Atlamaq | Pauza |
+|---|---|---|
+| Telefon / planşet | Ekrana toxun | ❚❚ düyməsi (sağ yuxarı küncdə) |
+| Kompüter | Boşluq, ↑ və ya W | P və ya Esc |
+| TV pultu | OK (Enter) | Pause / Play düyməsi |
+
+Pauzada ekrana toxunmaq və ya OK basmaq oyunu davam etdirir. Başqa tab-a və ya proqrama keçəndə oyun avtomatik dayanır.
 
 Menyuda ← → sürəti, ↓ dili dəyişir.
 

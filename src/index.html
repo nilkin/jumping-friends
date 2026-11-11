@@ -20,6 +20,9 @@
   #fs { position: fixed; top: 10px; right: 10px; top: max(10px, env(safe-area-inset-top)); right: max(10px, env(safe-area-inset-right));
         width: 46px; height: 46px; border-radius: 50%; border: 0; background: rgba(255,255,255,.8);
         font-size: 22px; cursor: pointer; z-index: 2; color: #333; }
+  #pause { position: fixed; top: 10px; right: 66px; top: max(10px, env(safe-area-inset-top)); right: max(66px, calc(env(safe-area-inset-right) + 56px));
+           width: 46px; height: 46px; border-radius: 50%; border: 0; background: rgba(255,255,255,.8);
+           font-size: 18px; font-weight: bold; letter-spacing: -2px; cursor: pointer; z-index: 2; color: #333; display: none; }
   #rot { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); background: rgba(255,255,255,.9);
          color: #333; padding: 10px 18px; border-radius: 30px; font-size: 16px; font-weight: bold; display: none; white-space: nowrap; }
   @media (orientation: portrait) and (max-aspect-ratio: 9/10) { #rot { display: block; } }
@@ -28,6 +31,8 @@
 <body>
 <canvas id="c" aria-label="Atlayan Dostlar oyunu"></canvas>
 <button id="fs" title="Tam ekran">⛶</button>
+<button id="pause" title="Pauza">❚❚</button>
+<input type="file" id="photo" accept="image/*" style="display:none">
 <div id="rot">🔄 Telefonu yan çevir — ekran böyük olacaq!</div>
 
 <script>
@@ -121,6 +126,7 @@ const STR = {
     win: ['Qalib gəldin! 🏆', 'Afərin! Hədiyyən gəlir! 🎁'], space: 'Kosmosa uçuruq! 🚀', livesOut: 'Canlar bitdi! 💔', back: 'Yenidən: ',
     angry: 'Əjdaha qəzəbləndi! 🔥', angry2: 'Diqqətli ol, od yağır!', last: 'Son döyüş! 🔥', congrats: 'Təbriklər! 🎉', finished: 'Oyunu bitirdin!',
     champion: 'Sən çempionsan!', replay: 'Yenidən oyna 🔄', rotate: '🔄 Telefonu yan çevir — ekran böyük olacaq!',
+    paused: 'Pauza', resume: 'Davam etmək üçün toxun və ya OK bas',
     stages: [['Yaz gəldi! 🌸', 'Çəyirtkə atlayır!'], ['Yay gəldi! ☀️', 'Qurbağa atlayır!'], ['Payız gəldi! 🍂', 'Dovşan atlayır!'], ['Qış gəldi! ❄️', 'Pinqvin atlayır!'], ['Aya çatdıq! 🌕', 'Astronavt atlayır!'], ['Marsa çatdıq! 🔴', 'Robot atlayır!'], ['Yupiterə çatdıq! ✨', 'Yadplanetli atlayır!'], ['Saturna çatdıq! 🪐', 'Ahtapot atlayır!'], ['Günəşə çatdıq! 🌞', 'Günəşcik atlayır!']],
     bosses: ['Böyük Arı', 'Qırmızı Xərçəng', 'Tikanlı Kirpi', 'Qar Adamı', 'Uçan Boşqab', 'Dəmir Robot', 'Fırtına Buludu', 'Kosmik Jele', 'Alov Əjdahası'] },
   ru: { title: 'Прыгающие друзья', play: 'Играть!', hint: 'Нажми на экран, Пробел или OK', speed: ['Медленно', 'Средне', 'Быстро'],
@@ -128,6 +134,7 @@ const STR = {
     win: ['Ты победил! 🏆', 'Молодец! Вот твой подарок! 🎁'], space: 'Летим в космос! 🚀', livesOut: 'Жизни закончились! 💔', back: 'Снова: ',
     angry: 'Дракон рассердился! 🔥', angry2: 'Осторожно, огненный дождь!', last: 'Последний бой! 🔥', congrats: 'Поздравляем! 🎉', finished: 'Ты прошёл игру!',
     champion: 'Ты чемпион!', replay: 'Играть снова 🔄', rotate: '🔄 Поверни телефон — экран станет больше!',
+    paused: 'Пауза', resume: 'Нажми на экран или OK, чтобы продолжить',
     stages: [['Пришла весна! 🌸', 'Прыгает кузнечик!'], ['Пришло лето! ☀️', 'Прыгает лягушка!'], ['Пришла осень! 🍂', 'Прыгает зайчик!'], ['Пришла зима! ❄️', 'Прыгает пингвин!'], ['Мы на Луне! 🌕', 'Прыгает космонавт!'], ['Мы на Марсе! 🔴', 'Прыгает робот!'], ['Мы на Юпитере! ✨', 'Прыгает инопланетянин!'], ['Мы на Сатурне! 🪐', 'Прыгает осьминог!'], ['Мы на Солнце! 🌞', 'Прыгает Солнышко!']],
     bosses: ['Большая Пчела', 'Красный Краб', 'Колючий Ёж', 'Снеговик', 'Летающая Тарелка', 'Железный Робот', 'Грозовая Туча', 'Космическое Желе', 'Огненный Дракон'] },
   en: { title: 'Jumping Friends', play: 'Play!', hint: 'Tap the screen, Space or OK', speed: ['Slow', 'Normal', 'Fast'],
@@ -135,6 +142,7 @@ const STR = {
     win: ['You won! 🏆', 'Well done! Here is your gift! 🎁'], space: 'Flying to space! 🚀', livesOut: 'No lives left! 💔', back: 'Again: ',
     angry: 'The dragon is angry! 🔥', angry2: 'Careful, fire rain!', last: 'The last battle! 🔥', congrats: 'Congratulations! 🎉', finished: 'You finished the game!',
     champion: 'You are the champion!', replay: 'Play again 🔄', rotate: '🔄 Turn your phone sideways for a bigger screen!',
+    paused: 'Paused', resume: 'Tap or press OK to continue',
     stages: [['Spring is here! 🌸', 'The grasshopper jumps!'], ['Summer is here! ☀️', 'The frog jumps!'], ['Autumn is here! 🍂', 'The bunny jumps!'], ['Winter is here! ❄️', 'The penguin jumps!'], ['We reached the Moon! 🌕', 'The astronaut jumps!'], ['We reached Mars! 🔴', 'The robot jumps!'], ['We reached Jupiter! ✨', 'The alien jumps!'], ['We reached Saturn! 🪐', 'The octopus jumps!'], ['We reached the Sun! 🌞', 'Little Sun jumps!']],
     bosses: ['Big Bee', 'Red Crab', 'Spiky Hedgehog', 'Snowman', 'Flying Saucer', 'Iron Robot', 'Storm Cloud', 'Space Jelly', 'Fire Dragon'] },
 };
@@ -161,9 +169,43 @@ let best = 0;
 try { best = +localStorage.getItem('ceyirtke-best') || 0; } catch (e) {}
 function saveBest() { try { localStorage.setItem('ceyirtke-best', best); } catch (e) {} }
 
+// ---------- Avatar: Günəş mərhələsində qəhrəmanın başı oyunçunun şəkli olur ----------
+// Şəkil yalnız bu brauzerdə (localStorage) saxlanılır, heç yerə göndərilmir.
+let avatarImg = null;
+function setAvatar(url) {
+  if (!url) { avatarImg = null; try { localStorage.removeItem('ad-avatar'); } catch (e) {} return; }
+  const img = new Image();
+  img.onload = () => { avatarImg = img; };
+  img.src = url;
+}
+try { const a = localStorage.getItem('ad-avatar'); if (a) setAvatar(a); } catch (e) {}
+const photoInput = document.getElementById('photo');
+photoInput.addEventListener('change', () => {
+  const file = photoInput.files && photoInput.files[0];
+  photoInput.value = '';
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    const img = new Image();
+    img.onload = () => {
+      // mərkəzdən kvadrat kəs, 160x160-a kiçilt
+      const S = 160, side = Math.min(img.width, img.height);
+      const c = document.createElement('canvas'); c.width = S; c.height = S;
+      c.getContext('2d').drawImage(img, (img.width - side) / 2, (img.height - side) / 2, side, side, 0, 0, S, S);
+      const url = c.toDataURL('image/jpeg', 0.85);
+      setAvatar(url);
+      try { localStorage.setItem('ad-avatar', url); } catch (e) {}
+      beep(880, 0.12, 'triangle', 0.06);
+    };
+    img.src = reader.result;
+  };
+  reader.readAsDataURL(file);
+});
+
 // ---------- Vəziyyət ----------
 const COLORS = ['#ff5e7e', '#4dabff', '#ffc93c', '#9b6bff', '#2fd4a8', '#ff8a3d'];
 let state = 'menu'; // menu | play | over
+let paused = false;
 let speed, dist, score, fans, mounds, stars, nextFan, t, flash, particles, starCount, cheer;
 let lives = 3, hitHalf = false, friends = [], friendScale = 1, finT = 0, endT = 0, shakeT = 0;
 let phase = 'run', stageStars = 0, hearts = 2, boss = null, bossDef = null, projectiles = [], fireworks = [], gift = null, gifts = [], floatTexts = [], winT = 0;
@@ -174,6 +216,7 @@ const hills = Array.from({ length: 9 }, (_, i) => ({ x: i * 220, r: 90 + Math.ra
 const flowers = Array.from({ length: 24 }, (_, i) => ({ x: i * 70 + Math.random() * 40, c: COLORS[i % COLORS.length], y: GROUND + 18 + Math.random() * 30 }));
 
 function reset() {
+  paused = false;
   speed = 230; dist = 0; score = 0; fans = []; mounds = []; stars = []; starCount = 0; cheer = 0;
   lives = 3; hitHalf = false; friends = []; finT = 0; endT = 0; shakeT = 0;
   phase = 'run'; stageStars = 0; hearts = 2; boss = null; projectiles = []; fireworks = []; gift = null; gifts = []; floatTexts = []; winT = 0;
@@ -1401,14 +1444,24 @@ function drawSunny(air, leg) {
     ctx.beginPath(); ctx.moveTo(-5, -21); ctx.lineTo(0, -33 - (i % 2) * 5); ctx.lineTo(5, -21); ctx.fill();
   }
   ctx.restore();
-  const g = ctx.createRadialGradient(-6, -46, 4, 0, -38, 24);
-  g.addColorStop(0, '#fff3b0'); g.addColorStop(1, '#ffc300');
-  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, -38, 23, 0, Math.PI * 2); ctx.fill();
-  eye(-3, -42, 6); eye(11, -42, 6);
-  cheek(-8, -31); cheek(17, -31);
-  smile(6, -30, 5);
+  if (avatarImg) {
+    // oyunçunun şəkli baş kimi, günəş şüaları ətrafında
+    const r = 26;
+    ctx.save(); ctx.beginPath(); ctx.arc(0, -38, r, 0, Math.PI * 2); ctx.clip();
+    ctx.drawImage(avatarImg, -r, -38 - r, r * 2, r * 2); ctx.restore();
+    ctx.strokeStyle = '#ffc300'; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.arc(0, -38, r, 0, Math.PI * 2); ctx.stroke();
+  } else {
+    const g = ctx.createRadialGradient(-6, -46, 4, 0, -38, 24);
+    g.addColorStop(0, '#fff3b0'); g.addColorStop(1, '#ffc300');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, -38, 23, 0, Math.PI * 2); ctx.fill();
+    eye(-3, -42, 6); eye(11, -42, 6);
+    cheek(-8, -31); cheek(17, -31);
+    smile(6, -30, 5);
+  }
   ctx.strokeStyle = '#ff8a3d'; ctx.lineWidth = 4;
-  ctx.beginPath(); ctx.moveTo(21, -34); ctx.lineTo(29, air ? -50 : -26 + leg * 3); ctx.stroke();
+  const ax = avatarImg ? 26 : 21;
+  ctx.beginPath(); ctx.moveTo(ax, -34); ctx.lineTo(ax + 8, air ? -50 : -26 + leg * 3); ctx.stroke();
 }
 function drawDragon(b) {
   const angry = b.hp <= 3 && !b.happy;
@@ -1531,8 +1584,19 @@ function menuButtons() {
   const speedIcons = ['🐢 ', '🐇 ', '🚀 '];
   return [
     ...[0, 1, 2].map(i => ({ x: W / 2 - (sw * 3 + 20) / 2 + i * (sw + 10), y: 238, w: sw, h: 34, label: speedIcons[i] + T('speed')[i], sel: speedIdx === i, act: () => { speedIdx = i; applyLang(); } })),
-    ...LANGS.map((l, i) => ({ x: W / 2 - (lw * 3 + 20) / 2 + i * (lw + 10), y: 284, w: lw, h: 32, label: l.toUpperCase(), sel: lang === l, act: () => { lang = l; applyLang(); } })),
+    ...langRow(lw),
   ];
+}
+// Dil düymələri + şəkil (avatar) düyməsi, şəkil varsa silmək üçün ✕
+function langRow(lw) {
+  const items = LANGS.map(l => ({ w: lw, label: l.toUpperCase(), sel: lang === l, act: () => { lang = l; applyLang(); } }));
+  items.push({ w: lw, label: avatarImg ? '' : '📷', avatar: true, gap: 16, photo: true, act: () => {} });
+  if (avatarImg) items.push({ w: 32, label: '✕', act: () => setAvatar(null) });
+  let total = 0;
+  items.forEach((b, i) => { total += b.w + (i ? (b.gap || 10) : 0); });
+  let x = W / 2 - total / 2;
+  items.forEach((b, i) => { if (i) x += b.gap || 10; b.x = x; b.y = 284; b.h = 32; b.sel = !!b.sel; x += b.w; });
+  return items;
 }
 function endButton() { return { x: W / 2 - 120, y: 262, w: 240, h: 42 }; }
 function goMenu() { state = 'menu'; reset(); }
@@ -1559,6 +1623,26 @@ function hit(f) {
   return false;
 }
 
+// ---------- Pauza ----------
+const pauseBtn = document.getElementById('pause');
+if (fsBtn.style.display === 'none') pauseBtn.style.right = '10px';
+function setPaused(p) {
+  if (state !== 'play') p = false;
+  if (paused === p) return;
+  paused = p; hop.holding = false;
+  beep(p ? 440 : 660, 0.08, 'triangle', 0.05);
+}
+onPress(pauseBtn, e => { e.preventDefault(); e.stopPropagation(); setPaused(!paused); });
+pauseBtn.addEventListener('click', e => { e.stopPropagation(); pauseBtn.blur(); });
+// P, Esc, klaviaturanın Pause düyməsi, TV pultunun Pause/Play düymələri
+const PAUSE_KEYS = ['p', 'P', 'Escape', 'Esc', 'Pause', 'MediaPause', 'MediaPlayPause'];
+const PAUSE_CODES = [80, 27, 19, 179];
+function isPauseKey(e, k) { return PAUSE_KEYS.includes(k) || PAUSE_CODES.includes(e.keyCode); }
+function isPlayKey(e, k) { return k === 'MediaPlay' || e.keyCode === 415; }
+function onVisibility() { if (document.hidden || document.webkitHidden) setPaused(true); }
+document.addEventListener('visibilitychange', onVisibility);
+document.addEventListener('webkitvisibilitychange', onVisibility);
+
 // ---------- İdarəetmə ----------
 function jumpPress() {
   if (state === 'menu') { state = 'play'; reset(); }
@@ -1576,6 +1660,13 @@ const JUMP_KEYS = ['Space', 'ArrowUp', 'KeyW', 'Enter', 'NumpadEnter', 'Select']
 function isJumpKey(e) { const k = keyOf(e); return JUMP_KEYS.includes(e.code) || k === 'Enter' || k === ' ' || k === 'ArrowUp' || k === 'w' || k === 'W' || e.keyCode === 13 || e.keyCode === 23; }
 addEventListener('keydown', e => {
   const key = keyOf(e);
+  if (state === 'play' && (isPauseKey(e, key) || isPlayKey(e, key))) {
+    e.preventDefault(); if (!e.repeat) setPaused(isPlayKey(e, key) ? false : !paused); return;
+  }
+  if (paused) {
+    if (isJumpKey(e)) { e.preventDefault(); if (!e.repeat) setPaused(false); }
+    return;
+  }
   if (state === 'menu' && ['ArrowLeft', 'ArrowRight', 'ArrowDown'].includes(key)) {
     e.preventDefault();
     if (key === 'ArrowLeft') speedIdx = Math.max(0, speedIdx - 1);
@@ -1589,9 +1680,10 @@ addEventListener('keydown', e => {
     jumpPress();
   }
 });
-addEventListener('keyup', e => { if (isJumpKey(e)) jumpRelease(); });
+addEventListener('keyup', e => { if (!paused && isJumpKey(e)) jumpRelease(); });
 onPress(cv, e => {
   e.preventDefault();
+  if (paused) { setPaused(false); return; }
   const r = cv.getBoundingClientRect();
   const lx = (e.clientX - r.left) * W / r.width, ly = (e.clientY - r.top) * H / r.height;
   const inside = b => lx >= b.x && lx <= b.x + b.w && ly >= b.y && ly <= b.y + b.h;
@@ -1602,6 +1694,14 @@ onPress(cv, e => {
   jumpPress();
 });
 onRelease(window, jumpRelease);
+// Fayl seçimi pointerdown-dan açılmır (mobil brauzerlər icazə vermir), ona görə click-də açılır
+cv.addEventListener('click', e => {
+  if (state !== 'menu' || paused) return;
+  const r = cv.getBoundingClientRect();
+  const lx = (e.clientX - r.left) * W / r.width, ly = (e.clientY - r.top) * H / r.height;
+  const b = menuButtons().filter(b => b.photo)[0];
+  if (b && lx >= b.x && lx <= b.x + b.w && ly >= b.y && ly <= b.y + b.h) photoInput.click();
+});
 
 // ---------- Mətn ----------
 function txt(s, x, y, size, color = '#fff', align = 'center') {
@@ -1621,7 +1721,9 @@ function spawnFirework(rate, dt) {
   }
 }
 function loop(now) {
-  let dt = Math.min(0.033, (now - last) / 1000); last = now;
+  let dt = paused ? 0 : Math.min(0.033, (now - last) / 1000); last = now;
+  const showPause = state === 'play' ? 'block' : 'none';
+  if (pauseBtn.style.display !== showPause) pauseBtn.style.display = showPause;
   t += dt;
   const realSpeed = speed;
   if (state === 'menu') speed = realSpeed * 0.35;
@@ -1791,7 +1893,14 @@ function loop(now) {
     ctx.fillStyle = '#fff';
     ctx.beginPath(); ctx.moveTo(W / 2 - 12, 120); ctx.lineTo(W / 2 + 22, 140); ctx.lineTo(W / 2 - 12, 160); ctx.closePath(); ctx.fill();
     txt(T('play'), W / 2, 210, 26, '#fff');
-    for (const b of menuButtons()) pill(b.x, b.y, b.w, b.h, b.label, b.sel);
+    for (const b of menuButtons()) {
+      pill(b.x, b.y, b.w, b.h, b.label, b.sel);
+      if (b.avatar && avatarImg) {
+        const cx = b.x + b.w / 2, cy = b.y + b.h / 2, r = b.h / 2 - 3;
+        ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.clip();
+        ctx.drawImage(avatarImg, cx - r, cy - r, r * 2, r * 2); ctx.restore();
+      }
+    }
     ctx.font = '13px sans-serif'; ctx.textAlign = 'center'; ctx.fillStyle = 'rgba(255,255,255,.9)';
     ctx.fillText(T('hint'), W / 2, 334);
   }
@@ -1817,6 +1926,17 @@ function loop(now) {
   }
 
   drawRocket();
+
+  if (paused) {
+    ctx.fillStyle = 'rgba(20,15,50,.55)'; ctx.fillRect(0, 0, W, H);
+    const pr = 40 + Math.sin(performance.now() / 250) * 3;
+    ctx.fillStyle = '#2fd4a8'; ctx.strokeStyle = '#fff'; ctx.lineWidth = 6;
+    ctx.beginPath(); ctx.arc(W / 2, 130, pr, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#fff';
+    ctx.beginPath(); ctx.moveTo(W / 2 - 12, 110); ctx.lineTo(W / 2 + 22, 130); ctx.lineTo(W / 2 - 12, 150); ctx.closePath(); ctx.fill();
+    txtFit(T('paused'), W / 2, 220, 44, '#ffd93d', W - 40);
+    txtFit(T('resume'), W / 2, 262, 22, '#fff', W - 40);
+  }
   requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
