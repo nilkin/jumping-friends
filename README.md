@@ -13,7 +13,7 @@
 - Maneənin üstünə yuxarıdan düşmək təhlükəsizdir
 - **Dillər:** Azərbaycan, Русский, English
 - **Sürət:** Yavaş / Orta / Sürətli
-- **Öz şəklin:** menyuda 📷 düyməsi ilə şəkil seçmək olar. Günəş mərhələsində qəhrəmanın başı bu şəkil olur. Şəkil seçilməyibsə, adi Günəşcik qalır. Şəkli ✕ düyməsi ilə silmək olar. Şəkil yalnız bu brauzerdə saxlanılır və heç yerə göndərilmir.
+- **Öz şəklin:** menyuda 📷 düyməsi ilə şəkil seçmək olar. Şəkildə baş (saç və üz) öz konturu ilə fonsuz kəsilir və bütün mərhələlərdə qəhrəmanın başı olur: qəhrəmanın kostyumu, qulaqları, papağı, bığcıqları qalır (qurbağanın gözləri isə örtülür), astronavtda üz dəbilqənin içində, robotda ekranda görünür. Günəş mərhələsində isə ayrıca animasiyalı personaj var. Üz hərəkət edir: göz qırpır, atlayanda çənəsi aşağı düşüb ağzı açılır, maneəyə dəyəndə gözlərini yumur. Kəsmə üçün brauzerin içində MediaPipe istifadə olunur (ilk dəfə ~30 MB model yüklənir). Üz tapılmasa və ya köhnə brauzerdə şəkil sadəcə yumru kəsilir. Personaj: iri yellənən baş, günəş şüaları, uçuşan plaş, havada qəhrəman pozası. Şəkil seçilməyibsə, bütün qəhrəmanlar olduğu kimi qalır. Şəkli ✕ düyməsi ilə silmək olar. Şəkil yalnız bu brauzerdə saxlanılır və heç yerə göndərilmir.
 
 ## İdarəetmə
 | Cihaz | Atlamaq | Pauza |

@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- AVTOMATİK YARADILIB: redaktə etməyin. Mənbə: src/index.html, build: npm run build -->
 <html lang="az">
 <head>
 <meta charset="UTF-8">
@@ -315,25 +316,78 @@ function saveBest() {
     localStorage.setItem('ceyirtke-best', best);
   } catch (e) {}
 }
-var avatarImg = null;
-function setAvatar(url) {
-  if (!url) {
+var avatarImg = null,
+  avatarFace = null,
+  avatarBusy = false;
+function setAvatar(data) {
+  if (!data) {
     avatarImg = null;
+    avatarFace = null;
     try {
       localStorage.removeItem('ad-avatar');
     } catch (e) {}
     return;
   }
+  var url = data,
+    face = null;
+  if (data.charAt(0) === '{') {
+    try {
+      var o = JSON.parse(data);
+      url = o.url;
+      face = o.face || null;
+    } catch (e) {
+      return;
+    }
+  }
   var img = new Image();
   img.onload = function () {
     avatarImg = img;
+    avatarFace = face;
   };
   img.src = url;
+}
+function saveAvatar(data) {
+  setAvatar(data);
+  try {
+    localStorage.setItem('ad-avatar', data);
+  } catch (e) {}
 }
 try {
   var a = localStorage.getItem('ad-avatar');
   if (a) setAvatar(a);
 } catch (e) {}
+function squareAvatar(img) {
+  var S = 160,
+    side = Math.min(img.width, img.height);
+  var c = document.createElement('canvas');
+  c.width = S;
+  c.height = S;
+  c.getContext('2d').drawImage(img, (img.width - side) / 2, (img.height - side) / 2, side, side, 0, 0, S, S);
+  return c.toDataURL('image/jpeg', 0.85);
+}
+function processPhoto(img) {
+  var done = function done(data) {
+    saveAvatar(data);
+    avatarBusy = false;
+    beep(880, 0.12, 'triangle', 0.06);
+  };
+  var fallback = function fallback() {
+    return done(squareAvatar(img));
+  };
+  if (!window.cutHead) {
+    fallback();
+    return;
+  }
+  avatarBusy = true;
+  var k = Math.min(1, 640 / Math.max(img.width, img.height));
+  var c = document.createElement('canvas');
+  c.width = Math.round(img.width * k);
+  c.height = Math.round(img.height * k);
+  c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+  window.cutHead(c).then(function (r) {
+    return done(JSON.stringify(r));
+  }, fallback);
+}
 var photoInput = document.getElementById('photo');
 photoInput.addEventListener('change', function () {
   var file = photoInput.files && photoInput.files[0];
@@ -343,18 +397,7 @@ photoInput.addEventListener('change', function () {
   reader.onload = function () {
     var img = new Image();
     img.onload = function () {
-      var S = 160,
-        side = Math.min(img.width, img.height);
-      var c = document.createElement('canvas');
-      c.width = S;
-      c.height = S;
-      c.getContext('2d').drawImage(img, (img.width - side) / 2, (img.height - side) / 2, side, side, 0, 0, S, S);
-      var url = c.toDataURL('image/jpeg', 0.85);
-      setAvatar(url);
-      try {
-        localStorage.setItem('ad-avatar', url);
-      } catch (e) {}
-      beep(880, 0.12, 'triangle', 0.06);
+      return processPhoto(img);
     };
     img.src = reader.result;
   };
@@ -1475,7 +1518,7 @@ function drawHopper() {
   if (hop.dizzy > 0 && Math.floor(hop.dizzy * 12) % 2 === 0) ctx.globalAlpha = 0.5;
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
-  HEROES[season](air, Math.sin(hop.legT * 18));
+  drawHero(season, air, Math.sin(hop.legT * 18), true);
   ctx.restore();
   ctx.globalAlpha = 1;
   if (hop.dizzy > 0) {
@@ -3161,10 +3204,296 @@ function drawGift(g) {
   ctx.restore();
   ctx.restore();
 }
-function drawSunny(air, leg) {
+function drawAvatarHero(air, leg) {
   var _legsOff4 = legsOff(air, leg),
     l1 = _legsOff4[0],
     l2 = _legsOff4[1];
+  var dizzy = hop.dizzy > 0;
+  var flap = Math.sin(t * (air ? 22 : 12)) * (air ? 7 : 4);
+  ctx.fillStyle = '#e63946';
+  ctx.beginPath();
+  ctx.moveTo(-9, -36);
+  ctx.quadraticCurveTo(-24, -24 + flap * 0.5, -30 + flap, -6 + (air ? -6 : 0));
+  ctx.lineTo(-16 + flap * 0.4, -10);
+  ctx.quadraticCurveTo(-12, -20, -4, -34);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = '#3a3560';
+  ctx.lineWidth = 5;
+  ctx.beginPath();
+  ctx.moveTo(-5, -14);
+  ctx.lineTo(-7 + l1, -4);
+  ctx.moveTo(5, -14);
+  ctx.lineTo(7 + l2, -4);
+  ctx.stroke();
+  ctx.fillStyle = '#ff5e7e';
+  rr(-14 + l1, -6, 13, 7, 3.5);
+  ctx.fill();
+  rr(2 + l2, -6, 13, 7, 3.5);
+  ctx.fill();
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(-14 + l1, -1.5, 13, 2);
+  ctx.fillRect(2 + l2, -1.5, 13, 2);
+  ctx.fillStyle = '#ffc300';
+  rr(-11, -38, 22, 26, 9);
+  ctx.fill();
+  ctx.strokeStyle = '#e09a00';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  drawStar(0, -25, 6, '#ff8a3d', Math.sin(t * 3) * 0.3);
+  var bob = air ? -3 : Math.abs(Math.sin(hop.legT * 18)) * -3;
+  var tilt = dizzy ? t * 14 : Math.sin(t * 7) * 0.12 + (air ? -0.15 : 0);
+  ctx.save();
+  ctx.translate(0, (avatarFace ? -64 : -60) + bob);
+  ctx.rotate(tilt);
+  var pulse = 1 + Math.sin(t * 5) * 0.06;
+  ctx.fillStyle = 'rgba(255,220,80,.35)';
+  ctx.beginPath();
+  ctx.arc(0, 0, 36 * pulse, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.save();
+  ctx.rotate(t * 1.5);
+  for (var i = 0; i < 12; i++) {
+    ctx.rotate(Math.PI / 6);
+    ctx.fillStyle = i % 2 ? '#ffb703' : '#ffd93d';
+    ctx.beginPath();
+    ctx.moveTo(-5, -24);
+    ctx.lineTo(0, -36 - i % 2 * 5 * pulse);
+    ctx.lineTo(5, -24);
+    ctx.fill();
+  }
+  ctx.restore();
+  drawPhotoHead(air, dizzy, 64, '#ffc300');
+  ctx.restore();
+  var wv = Math.sin(t * 9) * 6;
+  var armPts = air ? [[-27, -44], [27, -44]] : [[-15 - l1, -20], [29, -40 + wv]];
+  for (var _i41 = 0, _ref1 = [[8, '#3a3560'], [5, '#ffc300']]; _i41 < _ref1.length; _i41++) {
+    var _ref1$_i = _ref1[_i41],
+      w = _ref1$_i[0],
+      c = _ref1$_i[1];
+    ctx.strokeStyle = c;
+    ctx.lineWidth = w;
+    ctx.beginPath();
+    ctx.moveTo(-9, -33);
+    ctx.lineTo(armPts[0][0], armPts[0][1]);
+    ctx.moveTo(9, -33);
+    ctx.lineTo(armPts[1][0], armPts[1][1]);
+    ctx.stroke();
+  }
+  ctx.fillStyle = '#fff3b0';
+  ctx.strokeStyle = '#3a3560';
+  ctx.lineWidth = 1.5;
+  for (var _i43 = 0; _i43 < armPts.length; _i43++) {
+    var _armPts$_i = armPts[_i43],
+      hx = _armPts$_i[0],
+      hy = _armPts$_i[1];
+    ctx.beginPath();
+    ctx.arc(hx, hy, 4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+  }
+  if (air) for (var _i44 = 0; _i44 < 3; _i44++) {
+    var _a9 = t * 8 + _i44 * 2.1;
+    drawStar(Math.cos(_a9) * 40, -60 + Math.sin(_a9) * 30, 4, '#fff3b0');
+  }
+}
+function drawCutHead(air, dizzy) {
+  var maxH = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 64;
+  var maxW = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 58;
+  var f = avatarFace,
+    img = avatarImg,
+    iw = img.width,
+    ih = img.height;
+  var sc = Math.min(maxH / ih, maxW / iw),
+    w = iw * sc,
+    h = ih * sc;
+  var X = function X(u) {
+      return -w / 2 + u * w;
+    },
+    Y = function Y(v) {
+      return -h / 2 + v * h;
+    };
+  ctx.save();
+  ctx.scale(1, 1 + Math.sin(t * 9) * 0.025);
+  var m = f.mouth,
+    mwPx = m.w * iw;
+  var open = air ? mwPx * (0.22 + Math.min(0.1, Math.abs(hop.vy) / 6000)) : dizzy ? mwPx * 0.12 : 0;
+  if (open > 0) {
+    var cut = m.y * ih,
+      d = open * sc,
+      yc = Y(m.y);
+    ctx.drawImage(img, 0, 0, iw, cut, -w / 2, -h / 2, w, cut * sc);
+    ctx.drawImage(img, 0, cut - 1, iw, 2, -w / 2, yc, w, d);
+    ctx.drawImage(img, 0, cut, iw, ih - cut, -w / 2, yc + d, w, (ih - cut) * sc);
+    var mx = X(m.x),
+      mw = m.w * w;
+    ctx.fillStyle = '#3a0d10';
+    ctx.beginPath();
+    ctx.ellipse(mx, yc + d / 2, mw * 0.38, d * 0.5 + mw * 0.015, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#c4505e';
+    ctx.beginPath();
+    ctx.ellipse(mx, yc + d * 0.78, mw * 0.2, d * 0.2, 0, 0, Math.PI * 2);
+    ctx.fill();
+  } else ctx.drawImage(img, -w / 2, -h / 2, w, h);
+  var blink = dizzy || t % 3.1 < 0.13 || (t + 0.25) % 7.3 < 0.1;
+  if (blink) {
+    var lid = 'rgb(' + f.skin.map(function (c) {
+      return Math.round(c * 0.9);
+    }).join(',') + ')';
+    for (var _i46 = 0, _f$eyes2 = f.eyes; _i46 < _f$eyes2.length; _i46++) {
+      var e = _f$eyes2[_i46];
+      var ex = X(e.x),
+        ey = Y(e.y),
+        ew = e.w * w;
+      var eh = Math.max(e.h * w * 1.6, ew * 0.4);
+      ctx.fillStyle = lid;
+      ctx.beginPath();
+      ctx.ellipse(ex, ey - eh * 0.05, ew * 0.6, eh * 0.55, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(45,22,12,.9)';
+      ctx.lineWidth = Math.max(0.7, ew * 0.07);
+      ctx.beginPath();
+      ctx.moveTo(ex - ew * 0.5, ey);
+      ctx.quadraticCurveTo(ex, ey + eh * 0.32, ex + ew * 0.5, ey);
+      ctx.stroke();
+    }
+  }
+  ctx.restore();
+}
+function drawPhotoHead(air, dizzy, size, ring) {
+  if (avatarFace) {
+    drawCutHead(air, dizzy, size, size * 0.9);
+    return;
+  }
+  var r = size * 0.41;
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(0, 0, r, 0, Math.PI * 2);
+  ctx.clip();
+  ctx.drawImage(avatarImg, -r, -r, r * 2, r * 2);
+  ctx.restore();
+  ctx.strokeStyle = '#3a3560';
+  ctx.lineWidth = 5;
+  ctx.beginPath();
+  ctx.arc(0, 0, r, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.strokeStyle = ring;
+  ctx.lineWidth = 3;
+  ctx.stroke();
+}
+var HEAD_SPOTS = [{
+  hide: [22, -29, 16],
+  fill: '#4cd964',
+  at: [22, -38],
+  size: 40,
+  top: -52
+}, {
+  hide: [15, -33, 16],
+  more: [[4, -40, 11], [20, -38, 11]],
+  fill: '#3fc96b',
+  at: [12, -40],
+  size: 40
+}, {
+  hide: [17, -37, 14],
+  fill: '#f3e6d6',
+  at: [17, -41],
+  size: 40,
+  top: -53
+}, {
+  hide: [8, -50, 14],
+  fill: '#2b3a55',
+  at: [8, -51],
+  size: 38,
+  top: -61
+}, {
+  visor: [9, -58, 12, 10.5],
+  at: [9, -56],
+  size: 30
+}, {
+  visor: [4, -59, 14, 10, 1],
+  at: [4, -57],
+  size: 30
+}, {
+  hide: [3, -37, 15],
+  fill: '#8be04e',
+  at: [3, -50],
+  size: 42,
+  top: -62
+}, {
+  hide: [4, -35, 16],
+  fill: '#c77dff',
+  at: [4, -44],
+  size: 42
+}];
+function drawHero(i, air, leg, player) {
+  var spot = avatarImg && HEAD_SPOTS[i];
+  if (!spot) {
+    HEROES[i](air, leg);
+    return;
+  }
+  var dizzy = player && hop.dizzy > 0;
+  var bob = air ? -2 : Math.abs(Math.sin((player ? hop.legT : t) * 18 + i)) * -2;
+  var tilt = dizzy ? t * 14 : Math.sin(t * 7 + i) * 0.08 + (air ? -0.1 : 0);
+  var head = function head() {
+    ctx.save();
+    ctx.translate(spot.at[0], spot.at[1] + bob);
+    ctx.rotate(tilt);
+    drawPhotoHead(air, dizzy, spot.size, '#fff');
+    ctx.restore();
+  };
+  if (spot.visor) {
+    HEROES[i](air, leg);
+    var _spot$visor = spot.visor,
+      vx = _spot$visor[0],
+      vy = _spot$visor[1],
+      rx = _spot$visor[2],
+      ry = _spot$visor[3],
+      box = _spot$visor[4];
+    ctx.save();
+    ctx.beginPath();
+    if (box) rr(vx - rx, vy - ry, rx * 2, ry * 2, 4);else ctx.ellipse(vx, vy, rx, ry, 0, 0, Math.PI * 2);
+    ctx.fillStyle = box ? '#1b2a3a' : '#2b4c7e';
+    ctx.fill();
+    ctx.clip();
+    ctx.translate(spot.at[0], spot.at[1] + bob * 0.3);
+    drawPhotoHead(air, dizzy, spot.size, '#fff');
+    ctx.restore();
+    ctx.fillStyle = 'rgba(255,255,255,.35)';
+    ctx.beginPath();
+    ctx.ellipse(vx - rx * 0.45, vy - ry * 0.5, rx * 0.35, ry * 0.18, -0.4, 0, Math.PI * 2);
+    ctx.fill();
+    return;
+  }
+  HEROES[i](air, leg);
+  ctx.fillStyle = spot.fill;
+  for (var _i48 = 0, _concat2 = [spot.hide].concat(spot.more || []); _i48 < _concat2.length; _i48++) {
+    var _concat2$_i = _concat2[_i48],
+      cx = _concat2$_i[0],
+      cy = _concat2$_i[1],
+      cr = _concat2$_i[2];
+    ctx.beginPath();
+    ctx.arc(cx, cy, cr, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  head();
+  if (spot.top != null) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(-300, -300, 600, 300 + spot.top);
+    ctx.clip();
+    HEROES[i](air, leg);
+    ctx.restore();
+  }
+}
+function drawSunny(air, leg) {
+  if (avatarImg) {
+    drawAvatarHero(air, leg);
+    return;
+  }
+  var _legsOff5 = legsOff(air, leg),
+    l1 = _legsOff5[0],
+    l2 = _legsOff5[1];
   ctx.strokeStyle = '#ff8a3d';
   ctx.lineWidth = 4;
   ctx.beginPath();
@@ -3191,39 +3520,23 @@ function drawSunny(air, leg) {
     ctx.fill();
   }
   ctx.restore();
-  if (avatarImg) {
-    var r = 26;
-    ctx.save();
-    ctx.beginPath();
-    ctx.arc(0, -38, r, 0, Math.PI * 2);
-    ctx.clip();
-    ctx.drawImage(avatarImg, -r, -38 - r, r * 2, r * 2);
-    ctx.restore();
-    ctx.strokeStyle = '#ffc300';
-    ctx.lineWidth = 4;
-    ctx.beginPath();
-    ctx.arc(0, -38, r, 0, Math.PI * 2);
-    ctx.stroke();
-  } else {
-    var g = ctx.createRadialGradient(-6, -46, 4, 0, -38, 24);
-    g.addColorStop(0, '#fff3b0');
-    g.addColorStop(1, '#ffc300');
-    ctx.fillStyle = g;
-    ctx.beginPath();
-    ctx.arc(0, -38, 23, 0, Math.PI * 2);
-    ctx.fill();
-    eye(-3, -42, 6);
-    eye(11, -42, 6);
-    cheek(-8, -31);
-    cheek(17, -31);
-    smile(6, -30, 5);
-  }
+  var g = ctx.createRadialGradient(-6, -46, 4, 0, -38, 24);
+  g.addColorStop(0, '#fff3b0');
+  g.addColorStop(1, '#ffc300');
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.arc(0, -38, 23, 0, Math.PI * 2);
+  ctx.fill();
+  eye(-3, -42, 6);
+  eye(11, -42, 6);
+  cheek(-8, -31);
+  cheek(17, -31);
+  smile(6, -30, 5);
   ctx.strokeStyle = '#ff8a3d';
   ctx.lineWidth = 4;
-  var ax = avatarImg ? 26 : 21;
   ctx.beginPath();
-  ctx.moveTo(ax, -34);
-  ctx.lineTo(ax + 8, air ? -50 : -26 + leg * 3);
+  ctx.moveTo(21, -34);
+  ctx.lineTo(29, air ? -50 : -26 + leg * 3);
   ctx.stroke();
 }
 function drawDragon(b) {
@@ -3278,12 +3591,12 @@ function drawDragon(b) {
     ctx.stroke();
   }
   ctx.fillStyle = '#ffd166';
-  for (var _i40 = 0; _i40 < 5; _i40++) {
-    var sx = 2 + _i40 * 16;
+  for (var _i49 = 0; _i49 < 5; _i49++) {
+    var sx = 2 + _i49 * 16;
     ctx.beginPath();
-    ctx.moveTo(sx - 6, -89 + _i40 * 2);
-    ctx.lineTo(sx, -104 + _i40 * 2);
-    ctx.lineTo(sx + 6, -89 + _i40 * 2);
+    ctx.moveTo(sx - 6, -89 + _i49 * 2);
+    ctx.lineTo(sx, -104 + _i49 * 2);
+    ctx.lineTo(sx + 6, -89 + _i49 * 2);
     ctx.fill();
   }
   ctx.fillStyle = body;
@@ -3312,8 +3625,8 @@ function drawDragon(b) {
   ctx.arc(-84, -96, 2.2, 0, Math.PI * 2);
   ctx.arc(-79, -98, 2.2, 0, Math.PI * 2);
   ctx.fill();
-  if (!b.happy) for (var _i41 = 0; _i41 < 2; _i41++) {
-    var ph = (t * 1.2 + _i41 * 0.5) % 1;
+  if (!b.happy) for (var _i50 = 0; _i50 < 2; _i50++) {
+    var ph = (t * 1.2 + _i50 * 0.5) % 1;
     ctx.fillStyle = "rgba(120,120,120,".concat(0.5 * (1 - ph), ")");
     ctx.beginPath();
     ctx.arc(-88 - ph * 20, -102 - ph * 26, 4 + ph * 6, 0, Math.PI * 2);
@@ -3325,10 +3638,10 @@ function drawDragon(b) {
     ctx.beginPath();
     ctx.ellipse(-76, -84, 11, 7, 0, 0, Math.PI * 2);
     ctx.fill();
-    for (var _i42 = 0; _i42 < 5; _i42++) {
-      ctx.fillStyle = ['#ffd166', '#ff9f1c', '#ff5400'][_i42 % 3];
+    for (var _i51 = 0; _i51 < 5; _i51++) {
+      ctx.fillStyle = ['#ffd166', '#ff9f1c', '#ff5400'][_i51 % 3];
       ctx.beginPath();
-      ctx.arc(-92 - _i42 * 10, -84 + Math.sin(t * 40 + _i42) * 4, 9 - _i42, 0, Math.PI * 2);
+      ctx.arc(-92 - _i51 * 10, -84 + Math.sin(t * 40 + _i51) * 4, 9 - _i51, 0, Math.PI * 2);
       ctx.fill();
     }
   } else bossMouth(-66, -84, 9, b);
@@ -3443,8 +3756,8 @@ function startFinale() {
   });
 }
 function updateFriends(dt) {
-  for (var _i44 = 0, _friends2 = friends; _i44 < _friends2.length; _i44++) {
-    var f = _friends2[_i44];
+  for (var _i53 = 0, _friends2 = friends; _i53 < _friends2.length; _i53++) {
+    var f = _friends2[_i53];
     f.x += (f.tx - f.x) * Math.min(1, dt * 1.6);
     f.vy += 1900 * dt;
     f.y += f.vy * dt;
@@ -3457,8 +3770,8 @@ function updateFriends(dt) {
   }
 }
 function drawFriends() {
-  for (var _i46 = 0, _friends4 = friends; _i46 < _friends4.length; _i46++) {
-    var f = _friends4[_i46];
+  for (var _i55 = 0, _friends4 = friends; _i55 < _friends4.length; _i55++) {
+    var f = _friends4[_i55];
     ctx.fillStyle = 'rgba(0,0,0,.15)';
     ctx.beginPath();
     ctx.ellipse(f.x, GROUND + 3, 22 * friendScale, 4, 0, 0, Math.PI * 2);
@@ -3468,7 +3781,7 @@ function drawFriends() {
     ctx.scale(1.25 * friendScale, 1.25 * friendScale);
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
-    HEROES[f.i](!f.onGround, Math.sin(t * 18 + f.i));
+    drawHero(f.i, !f.onGround, Math.sin(t * 18 + f.i), false);
     ctx.restore();
   }
 }
@@ -3557,8 +3870,8 @@ function langRow(lw) {
   });
   items.push({
     w: lw,
-    label: avatarImg ? '' : '📷',
-    avatar: true,
+    label: avatarBusy ? '⏳' : avatarImg ? '' : '📷',
+    avatar: !avatarBusy,
     gap: 16,
     photo: true,
     act: function act() {}
@@ -3656,10 +3969,21 @@ function onVisibility() {
 }
 document.addEventListener('visibilitychange', onVisibility);
 document.addEventListener('webkitvisibilitychange', onVisibility);
+var START_STAGE = function () {
+  var m = /[?&]stage=(\d+)/.exec(location.search);
+  var n = m ? parseInt(m[1], 10) - 1 : 0;
+  return n > 0 && n < SEASONS.length ? n : 0;
+}();
 function jumpPress() {
   if (state === 'menu') {
     state = 'play';
     reset();
+    if (START_STAGE) {
+      gifts = BOSSES.slice(0, START_STAGE).map(function (b) {
+        return b.gift;
+      });
+      goToStage(START_STAGE, T('stages')[START_STAGE][0], T('stages')[START_STAGE][1]);
+    }
   }
   hop.holding = true;
   if (hop.onGround) {
@@ -3734,8 +4058,8 @@ onPress(cv, function (e) {
     return lx >= b.x && lx <= b.x + b.w && ly >= b.y && ly <= b.y + b.h;
   };
   if (state === 'menu') {
-    for (var _i48 = 0, _menuButtons2 = menuButtons(); _i48 < _menuButtons2.length; _i48++) {
-      var b = _menuButtons2[_i48];
+    for (var _i57 = 0, _menuButtons2 = menuButtons(); _i57 < _menuButtons2.length; _i57++) {
+      var b = _menuButtons2[_i57];
       if (inside(b)) {
         b.act();
         beep(660, 0.06, 'triangle', 0.05);
@@ -3813,8 +4137,8 @@ function loop(now) {
     hop.y += hop.vy * dt;
     var gy = groundAt(hop.x),
       onTopOf = null;
-    if (hop.vy >= 0) for (var _i50 = 0, _fans2 = fans; _i50 < _fans2.length; _i50++) {
-      var f = _fans2[_i50];
+    if (hop.vy >= 0) for (var _i59 = 0, _fans2 = fans; _i59 < _fans2.length; _i59++) {
+      var f = _fans2[_i59];
       var top = obstacleTop(f),
         half = obstacleHalf(f);
       if (hop.x + 24 > f.x - half && hop.x - 20 < f.x + half && prevY <= top + 14 && hop.y >= top - 2 && top < gy) {
@@ -3846,17 +4170,17 @@ function loop(now) {
       nextFan -= speed * dt;
       if (nextFan <= 0) spawn();
     }
-    for (var _i52 = 0, _fans4 = fans; _i52 < _fans4.length; _i52++) {
-      var _f = _fans4[_i52];
+    for (var _i61 = 0, _fans4 = fans; _i61 < _fans4.length; _i61++) {
+      var _f = _fans4[_i61];
       _f.x -= speed * dt;
       _f.angle += _f.spin * dt;
     }
-    for (var _i54 = 0, _mounds4 = mounds; _i54 < _mounds4.length; _i54++) {
-      var m = _mounds4[_i54];
+    for (var _i63 = 0, _mounds4 = mounds; _i63 < _mounds4.length; _i63++) {
+      var m = _mounds4[_i63];
       m.x -= speed * dt;
     }
-    for (var _i56 = 0, _stars2 = stars; _i56 < _stars2.length; _i56++) {
-      var st = _stars2[_i56];
+    for (var _i65 = 0, _stars2 = stars; _i65 < _stars2.length; _i65++) {
+      var st = _stars2[_i65];
       st.x -= speed * dt;
       st.a += dt;
       if (!st.got && Math.abs(st.x - hop.x) < 42 && Math.abs(st.y - (hop.y - 30)) < 48) {
@@ -3866,7 +4190,7 @@ function loop(now) {
         setTimeout(function () {
           return beep(1319, 0.14, 'triangle', 0.07);
         }, 80);
-        for (var _i57 = 0; _i57 < 10; _i57++) particles.push({
+        for (var _i66 = 0; _i66 < 10; _i66++) particles.push({
           x: st.x,
           y: st.y,
           vx: (Math.random() - .5) * 300,
@@ -3892,13 +4216,13 @@ function loop(now) {
                 return beep(n, 0.18, 'triangle', 0.07);
               }, i * 120);
             });
-            for (var _i58 = 0; _i58 < 40; _i58++) particles.push({
+            for (var _i67 = 0; _i67 < 40; _i67++) particles.push({
               x: Math.random() * W,
               y: -10,
               vx: (Math.random() - .5) * 120,
               vy: Math.random() * 100,
               life: 1.6,
-              c: COLORS[_i58 % COLORS.length]
+              c: COLORS[_i67 % COLORS.length]
             });
           }
         }
@@ -3915,8 +4239,8 @@ function loop(now) {
     mounds = mounds.filter(function (m) {
       return m.x + m.plat / 2 + m.slope > -10;
     });
-    if (hop.dizzy <= 0 && (phase === 'run' || phase === 'bossIntro' || phase === 'boss')) for (var _i60 = 0, _fans6 = fans; _i60 < _fans6.length; _i60++) {
-      var _f2 = _fans6[_i60];
+    if (hop.dizzy <= 0 && (phase === 'run' || phase === 'bossIntro' || phase === 'boss')) for (var _i69 = 0, _fans6 = fans; _i69 < _fans6.length; _i69++) {
+      var _f2 = _fans6[_i69];
       if (hit(_f2)) {
         getHit();
         break;
@@ -3977,8 +4301,8 @@ function loop(now) {
     } else hop.onGround = false;
     updateFriends(dt);
   } else {
-    for (var _i62 = 0, _fans8 = fans; _i62 < _fans8.length; _i62++) {
-      var _f3 = _fans8[_i62];
+    for (var _i71 = 0, _fans8 = fans; _i71 < _fans8.length; _i71++) {
+      var _f3 = _fans8[_i71];
       _f3.angle += _f3.spin * dt;
     }
     if (state === 'menu') {
@@ -3990,21 +4314,21 @@ function loop(now) {
   hop.squash *= 0.85;
   updateFireworks(dt);
   drawFireworks();
-  for (var _i64 = 0, _mounds6 = mounds; _i64 < _mounds6.length; _i64++) {
-    var _m = _mounds6[_i64];
+  for (var _i73 = 0, _mounds6 = mounds; _i73 < _mounds6.length; _i73++) {
+    var _m = _mounds6[_i73];
     drawMound(_m);
   }
-  for (var _i66 = 0, _fans0 = fans; _i66 < _fans0.length; _i66++) {
-    var _f4 = _fans0[_i66];
+  for (var _i75 = 0, _fans0 = fans; _i75 < _fans0.length; _i75++) {
+    var _f4 = _fans0[_i75];
     drawObstacle(_f4);
   }
-  for (var _i68 = 0, _stars4 = stars; _i68 < _stars4.length; _i68++) {
-    var _st = _stars4[_i68];
+  for (var _i77 = 0, _stars4 = stars; _i77 < _stars4.length; _i77++) {
+    var _st = _stars4[_i77];
     drawStar(_st.x, _st.y + Math.sin(_st.a * 4) * 5, 18, '#ffd93d', Math.sin(_st.a * 3) * 0.25);
   }
   if (boss) drawBoss(boss);
-  for (var _i70 = 0, _projectiles4 = projectiles; _i70 < _projectiles4.length; _i70++) {
-    var p = _projectiles4[_i70];
+  for (var _i79 = 0, _projectiles4 = projectiles; _i79 < _projectiles4.length; _i79++) {
+    var p = _projectiles4[_i79];
     drawProj(p);
   }
   if (gift) drawGift(gift);
@@ -4014,8 +4338,8 @@ function loop(now) {
   particles = particles.filter(function (p) {
     return (p.life -= dt) > 0;
   });
-  for (var _i72 = 0, _particles2 = particles; _i72 < _particles2.length; _i72++) {
-    var _p2 = _particles2[_i72];
+  for (var _i81 = 0, _particles2 = particles; _i81 < _particles2.length; _i81++) {
+    var _p2 = _particles2[_i81];
     _p2.vy += 900 * dt;
     _p2.x += _p2.vx * dt;
     _p2.y += _p2.vy * dt;
@@ -4029,8 +4353,8 @@ function loop(now) {
   floatTexts = floatTexts.filter(function (f) {
     return (f.life -= dt) > 0;
   });
-  for (var _i74 = 0, _floatTexts2 = floatTexts; _i74 < _floatTexts2.length; _i74++) {
-    var _f5 = _floatTexts2[_i74];
+  for (var _i83 = 0, _floatTexts2 = floatTexts; _i83 < _floatTexts2.length; _i83++) {
+    var _f5 = _floatTexts2[_i83];
     _f5.y -= 40 * dt;
     ctx.globalAlpha = Math.min(1, _f5.life * 2);
     txt(_f5.s, _f5.x, _f5.y, 28, _f5.c);
@@ -4043,9 +4367,9 @@ function loop(now) {
     ctx.fill();
     drawStar(42, 38, 18, '#ffd93d', Math.sin(t * 2) * 0.15);
     txt(String(starCount), 90, 50, 30, '#ffd93d');
-    for (var _i75 = 0; _i75 < 3; _i75++) {
-      var _f6 = _i75 < lives - 1 ? 1 : _i75 === lives - 1 ? hitHalf ? 0.5 : 1 : 0;
-      heartFill(150 + _i75 * 32, 38, 1.4, _f6);
+    for (var _i84 = 0; _i84 < 3; _i84++) {
+      var _f6 = _i84 < lives - 1 ? 1 : _i84 === lives - 1 ? hitHalf ? 0.5 : 1 : 0;
+      heartFill(150 + _i84 * 32, 38, 1.4, _f6);
     }
     if (gifts.length) {
       ctx.fillStyle = 'rgba(255,255,255,.55)';
@@ -4061,11 +4385,11 @@ function loop(now) {
       var narrow = W < 720;
       var px0 = narrow ? W / 2 - 5 * 22 : Math.max(272, W / 2 - 5 * 22 + 11),
         py = narrow ? 320 : 28;
-      for (var _i76 = 0; _i76 < 10; _i76++) {
-        if (_i76 < Math.min(stageStars, 10)) drawStar(px0 + _i76 * 22, py, 9, '#ffd93d');else {
+      for (var _i85 = 0; _i85 < 10; _i85++) {
+        if (_i85 < Math.min(stageStars, 10)) drawStar(px0 + _i85 * 22, py, 9, '#ffd93d');else {
           ctx.fillStyle = 'rgba(255,255,255,.55)';
           ctx.beginPath();
-          ctx.arc(px0 + _i76 * 22, py, 5, 0, Math.PI * 2);
+          ctx.arc(px0 + _i85 * 22, py, 5, 0, Math.PI * 2);
           ctx.fill();
         }
       }
@@ -4110,8 +4434,8 @@ function loop(now) {
     ctx.closePath();
     ctx.fill();
     txt(T('play'), W / 2, 210, 26, '#fff');
-    for (var _i78 = 0, _menuButtons4 = menuButtons(); _i78 < _menuButtons4.length; _i78++) {
-      var b = _menuButtons4[_i78];
+    for (var _i87 = 0, _menuButtons4 = menuButtons(); _i87 < _menuButtons4.length; _i87++) {
+      var b = _menuButtons4[_i87];
       pill(b.x, b.y, b.w, b.h, b.label, b.sel);
       if (b.avatar && avatarImg) {
         var cx = b.x + b.w / 2,
@@ -4121,7 +4445,10 @@ function loop(now) {
         ctx.beginPath();
         ctx.arc(cx, cy, r, 0, Math.PI * 2);
         ctx.clip();
-        ctx.drawImage(avatarImg, cx - r, cy - r, r * 2, r * 2);
+        var iw = avatarImg.width,
+          ih = avatarImg.height,
+          k = 2 * r / Math.max(iw, ih);
+        ctx.drawImage(avatarImg, cx - iw * k / 2, cy - ih * k / 2, iw * k, ih * k);
         ctx.restore();
       }
     }
@@ -4131,11 +4458,11 @@ function loop(now) {
     ctx.fillText(T('hint'), W / 2, 334);
   }
   if (state === 'end') {
-    var k = Math.min(1, endT * 2);
-    ctx.fillStyle = "rgba(20,15,50,".concat(0.45 * k, ")");
+    var _k2 = Math.min(1, endT * 2);
+    ctx.fillStyle = "rgba(20,15,50,".concat(0.45 * _k2, ")");
     ctx.fillRect(0, 0, W, H);
     ctx.save();
-    ctx.globalAlpha = k;
+    ctx.globalAlpha = _k2;
     var pw = Math.min(440, W - 30);
     ctx.fillStyle = 'rgba(255,255,255,.93)';
     rr(W / 2 - pw / 2, 22, pw, 296, 28);
@@ -4185,6 +4512,105 @@ function loop(now) {
   requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
+</script>
+<script type="module">
+// ---------- Başı konturu ilə kəsmək + üz nöqtələri (MediaPipe) ----------
+// Hər şey brauzerin içində işləyir, şəkil heç yerə göndərilmir. Kitabxana və modellər
+// yalnız ilk dəfə şəkil seçiləndə yüklənir (~30 MB, sonra brauzer keşindən gəlir).
+// Köhnə brauzerlər type="module" skriptləri oxumur; orada şəkil sadəcə yumru kəsilir.
+const MP = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14';
+const SEG_MODEL = 'https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_multiclass_256x256/float32/1/selfie_multiclass_256x256.tflite';
+const FACE_MODEL = 'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task';
+const FACE_OVAL = [10, 338, 297, 332, 284, 251, 389, 356, 454, 323, 361, 288, 397, 365, 379, 378, 400, 377, 152, 148, 176, 149, 150, 136, 172, 58, 132, 93, 234, 127, 162, 21, 54, 103, 67, 109];
+// selfie_multiclass kateqoriyaları: 0 fon, 1 saç, 2 bədən dərisi, 3 üz dərisi, 4 paltar, 5 digər (eynək, papaq)
+const HEAD_CATS = [1, 3, 5];
+let tools = null;
+function loadTools() {
+  if (!tools) {
+    tools = (async () => {
+      const v = await import(MP + '/vision_bundle.mjs');
+      const fs = await v.FilesetResolver.forVisionTasks(MP + '/wasm');
+      const [seg, face] = await Promise.all([
+        v.ImageSegmenter.createFromOptions(fs, { baseOptions: { modelAssetPath: SEG_MODEL, delegate: 'CPU' }, runningMode: 'IMAGE', outputCategoryMask: true, outputConfidenceMasks: false }),
+        v.FaceLandmarker.createFromOptions(fs, { baseOptions: { modelAssetPath: FACE_MODEL, delegate: 'CPU' }, runningMode: 'IMAGE', numFaces: 1 }),
+      ]);
+      return { seg, face };
+    })();
+    tools.catch(() => { tools = null; });
+  }
+  return tools;
+}
+window.cutHead = async (src) => {
+  const { seg, face } = await loadTools();
+  const W = src.width, H = src.height;
+  const lm = (face.detect(src).faceLandmarks || [])[0];
+  if (!lm) throw new Error('Üz tapılmadı');
+  const sr = seg.segment(src);
+  const mask = sr.categoryMask, mw = mask.width, mh = mask.height, cat = mask.getAsUint8Array().slice();
+  sr.close();
+
+  // Yalnız üzün ətrafındakı sahə (başqa adamların saçı, əllər və s. düşməsin)
+  let fx0 = 1, fy0 = 1, fx1 = 0, fy1 = 0;
+  for (const p of lm) { fx0 = Math.min(fx0, p.x); fx1 = Math.max(fx1, p.x); fy0 = Math.min(fy0, p.y); fy1 = Math.max(fy1, p.y); }
+  const fw = fx1 - fx0, fh = fy1 - fy0;
+  const rx0 = fx0 - fw * 0.6, rx1 = fx1 + fw * 0.6, ry0 = fy0 - fh * 0.9, ry1 = fy1 + fh * 0.06;
+
+  // Baş maskası: saç + üz dərisi (+ eynək) və üz ovalı
+  const mc = document.createElement('canvas'); mc.width = mw; mc.height = mh;
+  const mx = mc.getContext('2d'), id = mx.createImageData(mw, mh);
+  for (let y = 0; y < mh; y++) for (let x = 0; x < mw; x++) {
+    const nx = (x + 0.5) / mw, ny = (y + 0.5) / mh, i = y * mw + x;
+    if (nx >= rx0 && nx <= rx1 && ny >= ry0 && ny <= ry1 && HEAD_CATS.includes(cat[i])) id.data.fill(255, i * 4, i * 4 + 4);
+  }
+  mx.putImageData(id, 0, 0);
+  mx.fillStyle = '#fff'; mx.beginPath();
+  FACE_OVAL.forEach((k, j) => { const X = lm[k].x * mw, Y = lm[k].y * mh; j ? mx.lineTo(X, Y) : mx.moveTo(X, Y); });
+  mx.closePath(); mx.fill();
+
+  // Maskanın sərhədləri → kəsmə qutusu
+  const md = mx.getImageData(0, 0, mw, mh).data;
+  let bx0 = mw, by0 = mh, bx1 = -1, by1 = -1;
+  for (let y = 0; y < mh; y++) for (let x = 0; x < mw; x++) if (md[(y * mw + x) * 4 + 3] > 128) {
+    if (x < bx0) bx0 = x; if (x > bx1) bx1 = x; if (y < by0) by0 = y; if (y > by1) by1 = y;
+  }
+  const pad = 2;
+  const cx0 = Math.max(0, (bx0 - pad) / mw * W), cy0 = Math.max(0, (by0 - pad) / mh * H);
+  const cx1 = Math.min(W, (bx1 + 1 + pad) / mw * W), cy1 = Math.min(H, (by1 + 1 + pad) / mh * H);
+  const cw = cx1 - cx0, ch = cy1 - cy0, k = 220 / Math.max(cw, ch);
+  const out = document.createElement('canvas');
+  out.width = Math.round(cw * k); out.height = Math.round(ch * k);
+  const o = out.getContext('2d');
+  o.drawImage(src, cx0, cy0, cw, ch, 0, 0, out.width, out.height);
+  // maskanı yumşaq kənarlarla tətbiq et
+  o.globalCompositeOperation = 'destination-in';
+  o.filter = 'blur(1.5px)';
+  o.drawImage(mc, 0, 0, mw, mh, -cx0 * k, -cy0 * k, W * k, H * k);
+  o.filter = 'none'; o.globalCompositeOperation = 'source-over';
+
+  // Üz nöqtələri kəsilmiş şəklə görə (0..1)
+  const P = n => ({ x: (lm[n].x * W - cx0) / cw, y: (lm[n].y * H - cy0) / ch });
+  const dist = (a, b) => Math.hypot((a.x - b.x) * cw, (a.y - b.y) * ch) / cw;
+  const eye = (c1, c2, up, lo) => {
+    const a = P(c1), b = P(c2), u = P(up), l = P(lo);
+    return { x: (a.x + b.x) / 2, y: (u.y + l.y) / 2, w: dist(a, b), h: dist(u, l) };
+  };
+  const ml = P(61), mr = P(291), mu = P(13), mlo = P(14);
+  // dəri rəngi (yanaqlardan) — göz qapaqları üçün
+  const sctx = src.getContext('2d');
+  let r = 0, g = 0, b = 0, n = 0;
+  for (const idx of [50, 280, 101, 330]) {
+    const px = sctx.getImageData(Math.round(lm[idx].x * W) - 2, Math.round(lm[idx].y * H) - 2, 5, 5).data;
+    for (let i = 0; i < px.length; i += 4) { r += px[i]; g += px[i + 1]; b += px[i + 2]; n++; }
+  }
+  return {
+    url: out.toDataURL('image/png'),
+    face: {
+      eyes: [eye(33, 133, 159, 145), eye(362, 263, 386, 374)],
+      mouth: { x: (ml.x + mr.x) / 2, y: (mu.y + mlo.y) / 2, w: dist(ml, mr) },
+      skin: [Math.round(r / n), Math.round(g / n), Math.round(b / n)],
+    },
+  };
+};
 </script>
 </body>
 </html>
